@@ -281,6 +281,7 @@ struct fuse_operations svfs_oper = {
 	.utime = svfs_utime,
 	.open = svfs_open,
 	.read = svfs_read,
+        .release = svfs_release,
 	.write = svfs_write,
 	.flush = svfs_flush,
 	.opendir = svfs_opendir,
