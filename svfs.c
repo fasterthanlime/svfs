@@ -29,7 +29,12 @@ static FILE *m_debug;
 
 static void my_log(char *function, const char *path) {
 #ifdef DEBUG
-	fprintf(m_debug, "[%s] %s\n", function, path);
+        time_t now;
+        char *str;
+        time(&now);
+        str = ctime(&now);
+        str[strlen(str) - 1] = '\0';
+	fprintf(m_debug, "%s [%s] %s\n", str, function, path);
 	fflush(m_debug);
 #endif
 }
