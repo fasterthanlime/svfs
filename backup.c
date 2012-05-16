@@ -31,7 +31,7 @@ void v_table_print(struct v_table *table) {
     printf("[vtable] Table with %d elements and capacity %d:\n", table->size, table->capacity);
 
     for (int i = 0; i < table->size; i++) {
-        printf("[vtable] - Entry %d = %u => %p\n", i, table->entries[i]->key, table->entries[i]->value);
+        printf("[vtable] - Entry %d = %u => %s\n", i, table->entries[i]->key, table->entries[i]->value->path);
     }
     printf("[vtable] ------------------------ \n");
 }
@@ -89,7 +89,6 @@ void v_table_insert(struct v_table *table, uint32_t key, struct v_backup *value)
 
     int index = v_table_binary_search(table, key);
 
-    printf("[vtable] moving %d elements from %d to %d\n", table->size - index, index, index + 1);
     memmove(table->entries + index + 1, table->entries + index, (table->size - index) * sizeof(struct v_entry*));
 
     table->entries[index] = calloc(1, sizeof(struct v_entry));
@@ -97,7 +96,6 @@ void v_table_insert(struct v_table *table, uint32_t key, struct v_backup *value)
         .key = key,
         .value = value
     };
-    printf("[vtable] now element at %d has value %p\n", index, table->entries[index]->value);
 
     table->size++;
     v_table_print(table);
