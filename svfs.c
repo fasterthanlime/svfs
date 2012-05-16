@@ -21,6 +21,14 @@ static void svfs_fullpath(char fpath[PATH_MAX], const char *path) {
 	strncat(fpath, path, PATH_MAX);
 }
 
+/* Returns a non-zero value if the flags contain write flags */
+static int svfs_has_write_flags(int flags) {
+    return  (flags & O_TRUNC) || 
+            (flags & O_APPEND) || 
+            (flags & O_RDWR) || 
+            (flags & O_WRONLY);
+}
+
 #define DEBUG
 
 #ifdef DEBUG
@@ -170,6 +178,10 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
 
 	my_log("svfs_open", path);
 	svfs_fullpath(fpath, path);
+
+        if(svfs_has_write_flags(fi->flags)) {
+            my_log("svfs_open", "open for writing!");
+        }
 
 	fd = open(fpath, fi->flags);
 	fi->fh = fd;
