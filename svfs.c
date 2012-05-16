@@ -1,4 +1,5 @@
 #include "params.h"
+#include "backup.h"
 
 #include <ctype.h>
 #include <dirent.h>
@@ -14,6 +15,13 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <pthread.h>
+
+/*
+    The specifications say we can use globals for storing data,
+    since we don't care about multiple filesystems being mounted
+    with svfs. So, we indulge :)
+*/
+static struct v_table *context;
 
 /* Stores the absolute path in "fpath", based on the file name given in "path" */
 static void svfs_fullpath(char fpath[PATH_MAX], const char *path) {
@@ -181,6 +189,9 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
 
         if(svfs_has_write_flags(fi->flags)) {
             my_log("svfs_open", "open for writing!");
+
+            struct v_backup *backup = v_backup_new(fpath);
+            v_table_insert(context, backup->hash, backup);
         }
 
 	fd = open(fpath, fi->flags);
@@ -263,6 +274,7 @@ int svfs_releasedir(const char *path, struct fuse_file_info *fi) {
 
 /** Initialize filesystem */
 void *svfs_init(struct fuse_conn_info *conn) {
+        context = v_table_new();
 	return SVFS_DATA;
 }
 

@@ -14,4 +14,5 @@ struct svfs_state {
 
 #define SVFS_DATA      ((struct svfs_state *) fuse_get_context()->private_data)
 
-#endif
+#endif // #ifndef _PARAMS_H_
+
