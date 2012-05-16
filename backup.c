@@ -28,12 +28,13 @@ struct v_table *v_table_new() {
 }
 
 void v_table_print(struct v_table *table) {
-    printf("[vtable] Table with %d elements and capacity %d:\n", table->size, table->capacity);
+    //printf("[vtable] table with %d / %d elements:\n", table->size, table->capacity);
+    printf("[vtable] ------------------------ \n");
 
     for (int i = 0; i < table->size; i++) {
-        printf("[vtable] - Entry %d = %u => %s\n", i, table->entries[i]->key, table->entries[i]->value->path);
+        struct v_entry *entry = table->entries[i];
+        printf("[vtable] - %x => %s x %d\n", entry->key, entry->value->path, entry->value->num_writes);
     }
-    printf("[vtable] ------------------------ \n");
 }
 
 
@@ -44,7 +45,7 @@ int v_table_binary_search(struct v_table *table, uint32_t key) {
         int lbound = 0;
         int rbound = table->size;
 
-        printf("[vtable] should find index for %d\n", key);
+        //printf("[vtable] should find index for %d\n", key);
 
         // binary search to find the right spot
         int done = 0;
@@ -55,24 +56,24 @@ int v_table_binary_search(struct v_table *table, uint32_t key) {
             }
 
             uint32_t middle = table->entries[index]->key;
-            printf("[vtable] [%u, %u], index = %u, middle = %u\n", lbound, rbound, index, middle);
+            //printf("[vtable] [%u, %u], index = %u, middle = %u\n", lbound, rbound, index, middle);
 
             if (middle > key) {
                 // middle is bigger? look in the left portion
                 rbound = index;
-                printf("[vtable] left portion, new range = [%u, %u]\n", lbound, rbound);
+                //printf("[vtable] left portion, new range = [%u, %u]\n", lbound, rbound);
                 continue;
             } else if(middle < key) {
                 // middle is smaller? look in the right portion
                 lbound = index + 1;
-                printf("[vtable] right portion, new range = [%u, %u]\n", lbound, rbound);
+                //printf("[vtable] right portion, new range = [%u, %u]\n", lbound, rbound);
                 continue;
             }
             done = 1;
         } while (!done);
     }
 
-    printf("[vtable] index for key %d is %d\n", key, index);
+    //printf("[vtable] index for key %d is %d\n", key, index);
     return index;
 }
 
@@ -98,7 +99,22 @@ void v_table_insert(struct v_table *table, uint32_t key, struct v_backup *value)
     };
 
     table->size++;
-    v_table_print(table);
+}
+
+struct v_backup *v_table_lookup(struct v_table *table, const char *path) {
+    int key = hash_string(path);
+    int index = v_table_binary_search(table, key);
+
+    if (index >= 0 && index < table->size && table->entries[index]->key == key) {
+        struct v_backup *result = table->entries[index]->value;
+        if(strcmp(result->path, path) == 0) {
+            //printf("[vtable] found %s in table at index %d\n", path, index);
+            return result;
+        }
+    }
+
+    //printf("[vtable] %s is not in the table yet\n", path);
+    return NULL;
 }
 
 uint32_t hash_string(const char *string) {

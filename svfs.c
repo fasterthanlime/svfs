@@ -190,8 +190,13 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
         if(svfs_has_write_flags(fi->flags)) {
             my_log("svfs_open", "open for writing!");
 
-            struct v_backup *backup = v_backup_new(strdup(fpath));
-            v_table_insert(context, backup->hash, backup);
+            struct v_backup *backup = v_table_lookup(context, path);
+            if (!backup) {
+                backup = v_backup_new(strdup(path));
+                v_table_insert(context, backup->hash, backup);
+            }
+            backup->num_writes++;
+            v_table_print(context);
         }
 
 	fd = open(fpath, fi->flags);

@@ -44,7 +44,9 @@ struct v_table {
 };
 
 struct v_table *v_table_new();
+void v_table_print(struct v_table *table);
 void v_table_insert(struct v_table *table, uint32_t key, struct v_backup *value);
+struct v_backup *v_table_lookup(struct v_table *table, const char *path);
 
 #endif // #ifndef _BACKUP_H_
 
