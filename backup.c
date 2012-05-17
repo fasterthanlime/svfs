@@ -28,12 +28,12 @@ struct v_table *v_table_new() {
 }
 
 void v_table_print(struct v_table *table) {
-    //printf("[vtable] table with %d / %d elements:\n", table->size, table->capacity);
     printf("[vtable] ------------------------ \n");
 
     for (int i = 0; i < table->size; i++) {
         struct v_entry *entry = table->entries[i];
-        printf("[vtable] - %x => %s x %d\n", entry->key, entry->value->path, entry->value->num_writes);
+        int count = v_backup_count(entry->value);
+        printf("[vtable] - %x => %s x %d (written %d times)\n", entry->key, entry->value->path, count, entry->value->num_writes);
     }
 }
 
@@ -127,9 +127,44 @@ struct v_backup *v_backup_new(char *path) {
         .hash = hash_string(path),
         .path = path,
         .num_writes = 0,
+        .backups = NULL,
     };
 
     return backup;
+}
+
+int v_backup_count(struct v_backup *backup) {
+    int count = 0;
+    struct v_list *list = backup->backups;
+
+    while (list) {
+        list = list->next;
+        count++;
+    }
+
+    return count;
+}
+
+void v_backup_append(struct v_backup *backup, int fd) {
+    struct v_list **target = NULL;
+
+    if (!backup->backups) {
+        target = &(backup->backups);
+    } else {
+        struct v_list *tail = backup->backups;
+        while (tail->next) {
+            tail = tail->next;
+        }
+        target = &(tail->next);
+    }
+
+    *target = calloc(1, sizeof(struct v_list));
+    (**target) = (struct v_list) {
+        .fd = fd,
+        .next = NULL,
+    };
+
+    return;
 }
 
 

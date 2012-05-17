@@ -23,6 +23,39 @@
 */
 static struct v_table *context;
 
+/* 
+ * copy the file at `fpath` to a file named `${fpath}.backup.${number}
+ * and return the file descriptor corresponding to the backup.
+ */
+static int svfs_backup_file(const char *fpath, int number) {
+    char dst[PATH_MAX];
+    const int buffer_size = 4096;
+    char buffer[buffer_size];
+    int bytes_read = 0, total_bytes = 0;
+
+    snprintf(dst, PATH_MAX, "%s.backup.%d", fpath, number);
+
+    //printf("writing backup to %s\n", dst);
+
+    int src_fd = open(fpath, O_RDONLY);
+    int dst_fd = open(dst, O_CREAT | O_WRONLY, 0750);
+
+    //printf("src_fd = %d, dst_fd = %d\n", src_fd, dst_fd);
+
+    do {
+        bytes_read = read(src_fd, buffer, buffer_size);
+        write(dst_fd, buffer, bytes_read);
+        total_bytes += bytes_read;
+    } while(bytes_read > 0);
+
+    close(src_fd);
+    fsync(dst_fd);
+
+    //printf("total bytes written: %d\n", total_bytes);
+
+    return dst_fd;
+}
+
 /* Stores the absolute path in "fpath", based on the file name given in "path" */
 static void svfs_fullpath(char fpath[PATH_MAX], const char *path) {
 	strcpy(fpath, SVFS_DATA->rootdir);
@@ -31,10 +64,19 @@ static void svfs_fullpath(char fpath[PATH_MAX], const char *path) {
 
 /* Returns a non-zero value if the flags contain write flags */
 static int svfs_has_write_flags(int flags) {
-    return  (flags & O_TRUNC) || 
-            (flags & O_APPEND) || 
-            (flags & O_RDWR) || 
-            (flags & O_WRONLY);
+    printf("creat %d, trunc %d, append %d, rdwr %d, wronly %d, rdonly %d\n",
+            (flags & O_CREAT) != 0,
+            (flags & O_TRUNC) != 0,
+            (flags & O_APPEND) != 0,
+            (flags & O_RDWR) != 0,
+            (flags & O_WRONLY) != 0,
+            (flags & O_RDONLY) != 0
+          );
+
+    return  (flags & O_TRUNC) != 0 || 
+            (flags & O_APPEND) != 0 || 
+            (flags & O_RDWR) != 0 || 
+            (flags & O_WRONLY) != 0;
 }
 
 #define DEBUG
@@ -195,7 +237,11 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
                 backup = v_backup_new(strdup(path));
                 v_table_insert(context, backup->hash, backup);
             }
+
             backup->num_writes++;
+            int fd = svfs_backup_file(fpath, backup->num_writes);
+            v_backup_append(backup, fd);
+
             v_table_print(context);
         }
 
