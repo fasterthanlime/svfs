@@ -28,7 +28,22 @@ static time_t last_collection;
 #define BACKUP_DURATION 50
 
 static void svfs_reclaim_all(void) {
-    // TODO
+
+    // go through all entries delete everything
+    for (int i = 0; i < context->size; i++) {
+        struct v_entry *entry = context->entries[i];
+        struct v_list *list = entry->value->backups;
+
+        // go through all backups
+        while (list) {
+            unlink(list->path);
+            list = list->next;
+        }
+    }
+
+    // NOTE: there's quite a bit of memory we don't free manually
+    // but it doesn't appear to be a big deal, as it will be
+    // freed whenever we shut down anyway.
 }
 
 static void svfs_collect(void) {
