@@ -22,12 +22,45 @@
     with svfs. So, we indulge :)
 */
 static struct v_table *context;
+static time_t last_collection;
+
+#define COLLECTION_INTERVAL 10
+#define BACKUP_DURATION 60
+
+static void svfs_collect(void) {
+    time_t current;
+    time(&current);
+    double delta = difftime(current, last_collection);
+
+    printf("Time since last collection = %.0f seconds\n", delta);
+
+    if ((int) delta < COLLECTION_INTERVAL) {
+        return;
+    }
+
+    last_collection = current;
+    struct stat st;
+
+    // go through all entries, find outdated ones, delete them
+    for (int i = 0; i < context->size; i++) {
+        struct v_entry *entry = context->entries[i];
+        struct v_list *list = entry->value->backups;
+
+        // go through all backups
+        while (list) {
+            stat(list->path, &st);
+            delta = difftime(current, st.st_mtime);
+            printf("backup %s is %.0f seconds old\n", list->path, delta);
+            list = list->next;
+        }
+    }
+}
 
 /* 
  * copy the file at `fpath` to a file named `${fpath}.backup.${number}
  * and return the file descriptor corresponding to the backup.
  */
-static int svfs_backup_file(const char *fpath, int number) {
+static char *svfs_backup_file(const char *fpath, int number) {
     char dst[PATH_MAX];
     const int buffer_size = 4096;
     char buffer[buffer_size];
@@ -38,9 +71,7 @@ static int svfs_backup_file(const char *fpath, int number) {
     //printf("writing backup to %s\n", dst);
 
     int src_fd = open(fpath, O_RDONLY);
-    int dst_fd = open(dst, O_CREAT | O_WRONLY, 0750);
-
-    //printf("src_fd = %d, dst_fd = %d\n", src_fd, dst_fd);
+    int dst_fd = open(dst, O_CREAT | O_WRONLY);
 
     do {
         bytes_read = read(src_fd, buffer, buffer_size);
@@ -49,11 +80,11 @@ static int svfs_backup_file(const char *fpath, int number) {
     } while(bytes_read > 0);
 
     close(src_fd);
-    fsync(dst_fd);
+    close(dst_fd);
 
     //printf("total bytes written: %d\n", total_bytes);
 
-    return dst_fd;
+    return strdup(dst);
 }
 
 /* Stores the absolute path in "fpath", based on the file name given in "path" */
@@ -64,6 +95,7 @@ static void svfs_fullpath(char fpath[PATH_MAX], const char *path) {
 
 /* Returns a non-zero value if the flags contain write flags */
 static int svfs_has_write_flags(int flags) {
+    /*
     printf("creat %d, trunc %d, append %d, rdwr %d, wronly %d, rdonly %d\n",
             (flags & O_CREAT) != 0,
             (flags & O_TRUNC) != 0,
@@ -72,6 +104,7 @@ static int svfs_has_write_flags(int flags) {
             (flags & O_WRONLY) != 0,
             (flags & O_RDONLY) != 0
           );
+    */
 
     return  (flags & O_TRUNC) != 0 || 
             (flags & O_APPEND) != 0 || 
@@ -239,10 +272,13 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
             }
 
             backup->num_writes++;
-            int fd = svfs_backup_file(fpath, backup->num_writes);
-            v_backup_append(backup, fd);
+            char *path = svfs_backup_file(fpath, backup->num_writes);
+            v_backup_append(backup, path);
 
             v_table_print(context);
+
+            // perhaps collect on every write
+            svfs_collect();
         }
 
 	fd = open(fpath, fi->flags);
@@ -326,6 +362,7 @@ int svfs_releasedir(const char *path, struct fuse_file_info *fi) {
 /** Initialize filesystem */
 void *svfs_init(struct fuse_conn_info *conn) {
         context = v_table_new();
+        time(&last_collection);
 	return SVFS_DATA;
 }
 

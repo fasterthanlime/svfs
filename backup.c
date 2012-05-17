@@ -145,7 +145,7 @@ int v_backup_count(struct v_backup *backup) {
     return count;
 }
 
-void v_backup_append(struct v_backup *backup, int fd) {
+void v_backup_append(struct v_backup *backup, char *path) {
     struct v_list **target = NULL;
 
     if (!backup->backups) {
@@ -160,7 +160,7 @@ void v_backup_append(struct v_backup *backup, int fd) {
 
     *target = calloc(1, sizeof(struct v_list));
     (**target) = (struct v_list) {
-        .fd = fd,
+        .path = path,
         .next = NULL,
     };
 
