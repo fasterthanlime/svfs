@@ -3,6 +3,7 @@
 #define _BACKUP_H_
 
 #include <stdint.h>
+#include <time.h>
 
 #define X31_SEED 0xbafffffe
 
@@ -18,6 +19,7 @@ uint32_t hash_string(const char *string);
 
 struct v_list {
     char *path;
+    time_t timestamp;
     struct v_list *next;
 };
 

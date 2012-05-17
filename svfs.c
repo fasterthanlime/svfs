@@ -25,33 +25,49 @@ static struct v_table *context;
 static time_t last_collection;
 
 #define COLLECTION_INTERVAL 10
-#define BACKUP_DURATION 60
+#define BACKUP_DURATION 50
+
+static void svfs_reclaim_all(void) {
+    // TODO
+}
 
 static void svfs_collect(void) {
     time_t current;
     time(&current);
     double delta = difftime(current, last_collection);
 
-    printf("Time since last collection = %.0f seconds\n", delta);
+    //printf("Time since last collection = %.0f seconds\n", delta);
 
     if ((int) delta < COLLECTION_INTERVAL) {
         return;
     }
 
     last_collection = current;
-    struct stat st;
 
     // go through all entries, find outdated ones, delete them
     for (int i = 0; i < context->size; i++) {
         struct v_entry *entry = context->entries[i];
-        struct v_list *list = entry->value->backups;
+        struct v_list **list = &entry->value->backups;
 
         // go through all backups
-        while (list) {
-            stat(list->path, &st);
-            delta = difftime(current, st.st_mtime);
-            printf("backup %s is %.0f seconds old\n", list->path, delta);
-            list = list->next;
+        while (*list) {
+            char *path = (*list)->path;
+            time_t timestamp = (*list)->timestamp;
+
+            delta = difftime(current, timestamp);
+            //printf("backup %s is %.0f seconds old\n", path, delta);
+            if ((int) delta >= BACKUP_DURATION) {
+                //printf("removing!\n");
+                unlink(path);
+                free(path);
+                struct v_list *next = (*list)->next;
+                free(*list);
+
+                *list = next;
+                continue;
+            }
+
+            list = &((*list)->next);
         }
     }
 }
@@ -275,7 +291,7 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
             char *path = svfs_backup_file(fpath, backup->num_writes);
             v_backup_append(backup, path);
 
-            v_table_print(context);
+            //v_table_print(context);
 
             // perhaps collect on every write
             svfs_collect();
@@ -368,6 +384,7 @@ void *svfs_init(struct fuse_conn_info *conn) {
 
 /** Clean up filesystem */
 void svfs_destroy(void *userdata) {
+        svfs_reclaim_all();
 }
 
 /** Create and open a file */
