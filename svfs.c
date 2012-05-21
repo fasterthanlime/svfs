@@ -96,13 +96,15 @@ static char *svfs_backup_file(const char *fpath, int number) {
     const int buffer_size = 4096;
     char buffer[buffer_size];
     int bytes_read = 0, total_bytes = 0;
+    struct stat st;
 
     snprintf(dst, PATH_MAX, "%s.backup.%d", fpath, number);
 
     //printf("writing backup to %s\n", dst);
 
+    lstat(fpath, &st);
     int src_fd = open(fpath, O_RDONLY);
-    int dst_fd = open(dst, O_CREAT | O_WRONLY);
+    int dst_fd = open(dst, O_CREAT | O_WRONLY, st.st_mode);
 
     do {
         bytes_read = read(src_fd, buffer, buffer_size);
