@@ -23,7 +23,7 @@ as many backup files :/ Except if we only write on, say, different sha1)
 
 ## When it crashes
 
-    sudo umount -l mountdir
+    fusermount -u mountdir
 
 When gdb breaks, you're stuck, don't try to ls, to cd, nothing, just
 step through gdb and quit/restart because FUSE will freeze the fuck
