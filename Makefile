@@ -13,4 +13,4 @@ backup.o : backup.c backup.h
 	${CC} ${CFLAGS} -c backup.c
 
 clean:
-	rm -f svfs *.o
+	rm -f svfs *.o *.log
