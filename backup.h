@@ -63,8 +63,8 @@ void v_table_insert(struct v_table *table, uint32_t key, struct v_backup *value)
 /* Look up an entry in the table */
 struct v_backup *v_table_lookup(struct v_table *table, const char *path);
 
-/* Append a new backup to take care of by the GC */
-void v_backup_append(struct v_backup *backup, char *path);
+/* Push a new backup to take care of by the GC */
+void v_backup_push(struct v_backup *backup, char *path);
 
 /* Count number of backups stored */
 int v_backup_count(struct v_backup *backup);

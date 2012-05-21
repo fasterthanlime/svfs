@@ -304,7 +304,7 @@ int svfs_open(const char *path, struct fuse_file_info *fi) {
 
             backup->num_writes++;
             char *path = svfs_backup_file(fpath, backup->num_writes);
-            v_backup_append(backup, path);
+            v_backup_push(backup, path);
 
             //v_table_print(context);
 

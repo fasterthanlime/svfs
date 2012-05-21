@@ -145,25 +145,14 @@ int v_backup_count(struct v_backup *backup) {
     return count;
 }
 
-void v_backup_append(struct v_backup *backup, char *path) {
-    struct v_list **target = NULL;
-
-    if (!backup->backups) {
-        target = &(backup->backups);
-    } else {
-        struct v_list *tail = backup->backups;
-        while (tail->next) {
-            tail = tail->next;
-        }
-        target = &(tail->next);
-    }
-
-    *target = calloc(1, sizeof(struct v_list));
-    (**target) = (struct v_list) {
+void v_backup_push(struct v_backup *backup, char *path) {
+    struct v_list *new_head = calloc(1, sizeof(struct v_list));
+    (*new_head) = (struct v_list) {
         .path = path,
         .timestamp = time(NULL),
-        .next = NULL,
+        .next = backup->backups,
     };
+    backup->backups = new_head;
 
     return;
 }
