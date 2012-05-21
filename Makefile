@@ -3,6 +3,8 @@ CC=gcc
 CFLAGS =`pkg-config fuse --cflags` -g -Wall -std=gnu99
 LDFLAGS=`pkg-config fuse --libs`
 
+.PHONY: clean report
+
 svfs : svfs.o backup.o
 	${CC} ${CFLAGS} svfs.o backup.o -o svfs ${LDFLAGS} 
 
@@ -14,3 +16,7 @@ backup.o : backup.c backup.h
 
 clean:
 	rm -f svfs *.o *.log
+
+report:
+	pandoc report.md -o report.pdf
+
