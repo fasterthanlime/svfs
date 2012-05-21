@@ -1,4 +1,5 @@
-CC=clang
+#CC=clang
+CC=gcc
 CFLAGS =`pkg-config fuse --cflags` -g -Wall -std=gnu99
 LDFLAGS=`pkg-config fuse --libs`
 
