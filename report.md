@@ -1,7 +1,7 @@
-
+﻿
 # SVFS
 
-## Amos Wenger, Ismail Amrani, Sébastien Zürflüh
+## Amos Wenger, Ismaïl Amrani, Sébastien Zurfluh
 
 We were asked to implement a simple user-space filesystem
 that does backups on a regular basis, on top of FUSE.
@@ -32,7 +32,7 @@ but also a cleaner data structure.
 The hash function implemented here is the X31 hash: it is a
 very fast hash that should not be used for cryptographic
 purposes, but which tends to do a very good job at being used
-in the context of a lookup table.a
+in the context of a lookup table.
 
 We also planned to implement [Cuckoo hashing][cuckoo] to have
 a proper hash table but finally, doing a binary research in a
@@ -112,7 +112,7 @@ the last collection.
 In practice, this works very nicely: the excess garbage that this
 method generates is practically never a problem, because every time
 a file is open for writing, a collection is potentially run, which
-means that the space is freed even before we attempt to use it, ie.
+means that the space is freed even before we attempt to use it, i.e.
 no problem whatsoever.
 
 At the beginning, we thought of implementing garbage collection
